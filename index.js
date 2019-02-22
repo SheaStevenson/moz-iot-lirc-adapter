@@ -10,7 +10,11 @@ class LIRCAdapter extends Adapter {
     super(addonManager, manifest.name, manifest.name);
     addonManager.addAdapter(this);
 
+    console.log('constructing');
+
     lirc.on('connect', () => {
+      console.log('connecting');
+
       lirc.send('VERSION').then(res => {
         console.log('LIRC Version', res);
       });
@@ -21,13 +25,11 @@ class LIRCAdapter extends Adapter {
       }).catch(function(error) {
         console.log("Problems", error);
       });
-
-
     });
 
-    //for (const remote of manifest.moziot.config.devices) {
-      //this.handleDeviceAdded(new LIRCDevice(this, remote));
-    //}
+    for (const remote of manifest.moziot.config.devices) {
+      this.handleDeviceAdded(new LIRCDevice(this, remote));
+    }
   }
 }
 
@@ -51,7 +53,7 @@ class LIRCDevice extends Device {
 
     return new Promise((resolve, reject) => {
 
-      lirc.sendOnce('Bauhn_Soundbar', 'KEY_POWER').catch(error => {
+      lirc.sendOnce(this.remote, 'KEY_POWER').catch(error => {
         console.log(action.name);
         if (error) {
           reject('Command failed: ' + error);
