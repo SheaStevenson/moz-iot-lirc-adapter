@@ -1,0 +1,61 @@
+{
+  "name": "lirc-adapter",
+  "display_name": "LIRC",
+  "version": "0.0.1",
+  "description": "LIRC adapter.",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SheaStevenson/moz-iot-lirc-adapter.git"
+  },
+  "keywords": [
+    "mozilla",
+    "iot",
+    "adapter",
+    "lirc",
+    "ir",
+    "infrared",
+    "remote"
+  ],
+  "author": "Shea Stevenson",
+  "license": "MPL-2.0",
+  "bugs": {
+    "url": "https://github.com/SheaStevenson/moz-iot-lirc-adapter/issues"
+  },
+  "homepage": "https://github.com/SheaStevenson/moz-iot-lirc-adapter",
+  "dependencies": {
+    "lirc-client": "^2.0.0"
+  },
+  "files": [
+    "LICENSE",
+    "SHA256SUMS",
+    "index.js",
+    "node_modules"
+  ],
+  "moziot": {
+    "api": {
+      "min": 2,
+      "max": 2
+    },
+    "plugin": true,
+    "exec": "{nodeLoader} {path}",
+    "config": {
+      "devices": []
+    },
+    "schema": {
+      "type": "object",
+      "required": [
+        "devices"
+      ],
+      "properties": {
+        "devices": {
+          "type": "array",
+          "items": {
+            "description": "Remote Name",
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

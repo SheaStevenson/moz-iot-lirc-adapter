@@ -1,5 +1,9 @@
 # Dotfiles and system files
 .DS_Store
 
-# Node Modules
-/node_modules
+# Package Data
+*.swp
+*.tgz
+SHA256SUMS
+node_modules/
+package-lock.json
