@@ -38,24 +38,6 @@
       "max": 2
     },
     "plugin": true,
-    "exec": "{nodeLoader} {path}",
-    "config": {
-      "devices": []
-    },
-    "schema": {
-      "type": "object",
-      "required": [
-        "devices"
-      ],
-      "properties": {
-        "devices": {
-          "type": "array",
-          "items": {
-            "description": "Remote Name",
-            "type": "string"
-          }
-        }
-      }
-    }
+    "exec": "{nodeLoader} {path}"
   }
 }

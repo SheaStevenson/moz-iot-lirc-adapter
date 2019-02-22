@@ -8,28 +8,27 @@ const lirc = require('lirc-client')({
 class LIRCAdapter extends Adapter {
   constructor(addonManager, manifest) {
     super(addonManager, manifest.name, manifest.name);
-    addonManager.addAdapter(this);
-
-    console.log('constructing');
+    const adapter = this;
+    addonManager.addAdapter(adapter);
 
     lirc.on('connect', () => {
-      console.log('connecting');
-
       lirc.send('VERSION').then(res => {
-        console.log('LIRC Version', res);
+        console.log('LIRC Version Connected', res);
       });
 
       // Get available remote configs
       lirc.list().then(function(response) {
-        console.log("Remotes", response);
+        console.log("Remotes", typeof response, response);
+
+        // Add each available remote
+        for (const remote of response) {
+          console.log("Adding Remote", remote);
+          adapter.handleDeviceAdded(new LIRCDevice(adapter, remote));
+        }
       }).catch(function(error) {
         console.log("Problems", error);
       });
     });
-
-    for (const remote of manifest.moziot.config.devices) {
-      this.handleDeviceAdded(new LIRCDevice(this, remote));
-    }
   }
 }
 
@@ -42,18 +41,18 @@ class LIRCDevice extends Device {
     this.description = `Remote (${remote})`;
     this['@context'] = 'https://iot.mozilla.org/schemas';
     this['@type'] = [];
-    this.addAction('wake', {label: 'Wake'});
+    this.addAction('key_power', {label: 'Power'});
   }
 
   performAction(action) {
-    if (action.name !== 'wake') {
+    if (action.name !== 'key_power') {
       //return Promise.reject('Unknown action');
       console.log(action.name+' is not the wake command.');
     }
 
     return new Promise((resolve, reject) => {
 
-      lirc.sendOnce(this.remote, 'KEY_POWER').catch(error => {
+      lirc.sendOnce(this.remote, action.name).catch(error => {
         console.log(action.name);
         if (error) {
           reject('Command failed: ' + error);
