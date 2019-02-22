@@ -1,0 +1,5 @@
+# Dotfiles and system files
+.DS_Store
+
+# Node Modules
+/node_modules
