@@ -14,24 +14,15 @@ module.exports = {
 
     // Remove commands that will be set up manually
     device.actions.delete('KEY_POWER');
-    device.actions.delete('KEY_POWER2');
   },
 
   propertyChanged: function(device, property) {
     // If the power property changes, manually send the power command
     if (property.name == 'power') {
-      if (property.value) {
-        // Power On
-        device.sendIRCommand('KEY_POWER');
-
-      } else {
-        // Power Off
-        let count = 3; // Send 3 times in case one misses
-        let button_repeat = setInterval(() => {
-          device.sendIRCommand('KEY_POWER2');
-          if (--count === 0) clearInterval(button_repeat);
-        }, 500);
-      }
+      // Super simple toggle
+      // There's nothing I can do to keep this remote in sync with the gateway
+      // But it doesn't really matter that much either
+      device.sendIRCommand('KEY_POWER');
     }
   }
 }
