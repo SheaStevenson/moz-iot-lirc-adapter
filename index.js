@@ -1,6 +1,6 @@
 'use strict';
 
-const {Adapter, Device} = require('gateway-addon');
+const {Adapter, Device, Property} = require('gateway-addon');
 const lirc = require('lirc-client')({
   path: '/var/run/lirc/lircd'
 });
@@ -22,24 +22,24 @@ class LIRCAdapter extends Adapter {
 
       // Get available remote configs
       lirc.list().then(function(response) {
-        if (debug_mode) console.log("Found Remotes", response);
+        debug_mode && console.log("Found Remotes", response);
 
         // Add each available remote
         for (const remote of response) {
-          if (debug_mode) console.log("Adding Remote", remote);
+          debug_mode && console.log("Adding Remote", remote);
 
           // Start getting available commands
           lirc.list(remote).then(function(response){
             // Set up device, and add availble commands
-            if (debug_mode) console.log("Remote has commands", remote, response);
+            debug_mode && console.log("Remote has commands", remote, response);
             adapter.handleDeviceAdded(new LIRCDevice(adapter, remote, response));
           }).catch(function(error) {
-            if (debug_mode) console.log("Problem getting or adding commands", error);
+            debug_mode && console.log("Problem getting or adding commands", error);
           });
         }
 
       }).catch(function(error) {
-        if (debug_mode) console.log("Problem getting or adding remotes", error);
+        debug_mode && console.log("Problem getting or adding remotes", error);
       });
     });
   }
@@ -49,13 +49,29 @@ class LIRCDevice extends Device {
   constructor(adapter, remote, commands) {
     super(adapter, `lirc-${remote}`);
 
-    const device = this;
-
     this.remote = remote;
+
     this.name = `Remote (${remote})`;
     this.description = `Remote (${remote})`;
     this['@context'] = 'https://iot.mozilla.org/schemas';
     this['@type'] = [];
+
+
+    try {
+      // Add an extension for this remote if available
+      debug_mode && console.log("Adding extension", this.remote);
+      this.extension = require('./remote_extensions/'+this.remote);
+
+    } catch (error) {
+      if (error instanceof Error && error.code === "MODULE_NOT_FOUND") {
+        // No extension for this remote
+        debug_mode && console.log("No extension", this.remote);
+      } else {
+        // Something broke
+        throw error;
+      }
+    }
+
 
     // Add each available command
     for (const command of commands) {
@@ -63,33 +79,55 @@ class LIRCDevice extends Device {
       let command_code = command.split(" ")[1];
 
       // Process the label name
-      let command_label = command_code.replace('KEY_','').replace('_',' ').toLowerCase();
-      command_label = command_label.charAt(0).toUpperCase() + command_label.slice(1);
+      let command_label = command_code.replace('KEY_','').replace('_',' ');
 
       // Add the command
-      if (debug_mode) console.log("Adding Command", command_code, command_label);
+      debug_mode && console.log("Adding command", command_code, command_label);
       this.addAction(command_code, {label: command_label});
     }
+
+
+    // Run the Post Setup extension
+    this.hasExtensionFunction('postSetup') && this.extension.postSetup(this);
+
+  }
+
+
+  notifyPropertyChanged(property) {
+    // Let the Gateway itself know so it can update the interface
+    super.notifyPropertyChanged(property);
+
+    // Hook for extension function
+    this.hasExtensionFunction('propertyChanged') && this.extension.propertyChanged(this, property);
   }
 
 
   performAction(action) {
-    /*
-    if (action.name !== 'KEY_POWER') {
-      //return Promise.reject('Unknown action');
-      console.log(action.name+' is not the wake command.');
-    }
-    */
-
+    // Send an IR command
     return new Promise((resolve, reject) => {
-      lirc.sendOnce(this.remote, action.name).catch(error => {
-        if (error) {
-          reject('Command failed: ' + error);
-        } else {
-          resolve();
-        }
-      });
+      this.sendIRCommand(action.name);
     });
+  }
+
+
+  sendIRCommand(commandName) {
+    // Actually send the command
+    // If you understand how promises work please fix this for me
+    lirc.sendOnce(this.remote, commandName).then(
+      result => { return Promise.resolve(); },
+      error => {
+        if (error) console.log(error);
+        return Promise.reject('Command failed: ' + error);
+      }
+    );
+  }
+
+
+  hasExtensionFunction(functionName) {
+    // Safety check for extension functions
+    return (this.hasOwnProperty('extension')) &&
+      (this.extension.hasOwnProperty(functionName)) &&
+      (typeof this.extension[functionName] === "function");
   }
 }
 
