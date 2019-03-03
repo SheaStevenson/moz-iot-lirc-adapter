@@ -2,8 +2,6 @@
 
 This is a LIRC Adapter for the Mozilla IoT Gateway, made to work with my very specific hardware setup.
 
-Currently, it creates a new device for each remote control you have configured, and adds a button action for each of its commands.
-
 Unfortunately, it's not quite install and go - you'll have to do some work to get everything running on your own gateway, but I've tried to lead the way as much as possible.
 
 
